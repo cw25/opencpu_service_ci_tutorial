@@ -21,3 +21,22 @@ Luckily, we have all the pieces we need!
 + [Travis CI](https://travis-ci.com/) provides easy tools for automated testing of our Docker container
 
 
+
+# An Anatomy Lesson
+
+This Git repo can serve as a template for the layout of your project. This is the same file layout I've used for building my services at [Illuminate Education](https://www.illuminateed.com). It is organized as an R package, with a few add-ons for Docker and OpenCPU. Here's a quick rundown of what the various files and directories do:
+
+* `R/`: Your R code goes in this directory
+* `docker/installer.R`: Used to install any R dependencies your code might have. This will take the place of `library()` calls in your R code
+* `docker/opencpu_config/Renviron`: If your code relies on environment variables (via `Sys.getenv()`), you will need to set those variables here so that OpenCPU has access to them when it runs inside the Docker container
+* `docker/opencpu_config/server.conf`: Tells the OpenCPU server about your R dependencies so the libraries can be preloaded at server start time
+* `tests/testthat.R`: The master test file that is responsible for executing individual tests
+* `tests/testthat/`: Your individual R test files go in this directory
+* `.gitignore`: Prevents your local junk (things like the .DS_Store files on your Mac) from being stored/tracked by Git
+* `.travis.yml`: Required Travis integration settings
+* `DESCRIPTION`: Metadata about the R package you are developing
+* `Dockerfile`: Instructions for Docker on how to containerize your application
+* `NAMESPACE`: R package instructions for importing libraries and exporting your own functions
+* `README.md`: Bad jokes and explanatory gymnastics
+
+
