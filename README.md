@@ -334,7 +334,7 @@ $ curl -k -H "Content-Type: application/json" -X POST -d '{"text": "This is a di
 [3.8333]
 ```
 
-When working with OpenCPU, I highly recommend keeping a link to the (OpenCPU API docs)[https://www.opencpu.org/api.html] handy!
+When working with OpenCPU, I highly recommend keeping a link to the [OpenCPU API docs](https://www.opencpu.org/api.html) handy!
 
 
 
