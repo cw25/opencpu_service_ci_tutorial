@@ -172,7 +172,7 @@ OpenCPU can accept runtime configuration options from a `server.conf` file. We w
 
 I've also run into cases where I want OpenCPU to have access to environment variables. `docker/opencpu_config/Renviron` stores those variables.
 
-(_Note:_ Our .gitignore file is set up to exclude this file, so if you are using it to store something like database access credentials, they won't wind up publicly accessible in Github for all eternity.)
+(_Note:_ Our .gitignore file is set up to exclude this file, so if you are using it to store something sensitive like database access credentials, they won't wind up publicly accessible in Github.)
 
 In this tutorial, we won't actually use `Renviron`, but it looks something like this:
 
@@ -183,4 +183,175 @@ MYSERVICE_VAR2=bar
 
 
 
+# Docker
+
+I don't know about you, but I'm not too fond of setting up new server hardware. Rather than dedicate an entire production server to running OpenCPU, and doing all the hard work of installing and configuring it, we can just use Docker instead. If you've never used Docker, you can think of a Docker container as a stripped down virtual machine, containing only the bare minimum components necessary to run your service. Containerizing your service gives you some amazing advantages like tracking server configurations via version control, faster spin-up of services, efficient auto-scaling of your services, etc.
+
+We will need to setup two Docker-related files in order to build a Docker _image_ of our service. Once the image is built, we will spin up a container with our image and see OpenCPU in action. Let's start with the Dockerfile:
+
+
+```
+# Use the official OpenCPU Docker instructions
+FROM opencpu/base
+
+# Put a copy of our R code into the container
+WORKDIR /usr/local/src
+COPY . /usr/local/src/app
+
+# Move OpenCPU configuration files into place
+COPY docker/opencpu_config/* /etc/opencpu/
+
+# Run our custom install script to install R dependencies
+RUN /usr/bin/R --vanilla -f app/docker/installer.R
+
+# Install our code as an R package on the server
+RUN tar czf /tmp/stringstats.tar.gz app/ \
+  && /usr/bin/R CMD INSTALL /tmp/stringstats.tar.gz
+```
+
+Again, OpenCPU has done lots of the heavy lifting for us. The `opencpu/base` image takes care of the low-level setup and we only have to worry about our service. (If you're relly curious to see how the OpenCPU server's Dockerfile, you can take a look [here](https://hub.docker.com/r/opencpu/base/~/dockerfile/).)
+
+In our Dockerfile, you may have noticed that there is a command that runs a custom install script, `docker/installer.R`. We will use that script to install our dependencies. For this tutorial, we only need to install `stringr` from CRAN:
+
+```
+install.packages(c('stringr'), repos='http://cran.us.r-project.org', dependencies=TRUE)
+```
+
+If we wanted to install multiple CRAN packages, we would simply add them to our `install.packages()` call. We might also use `devtools::install_github()` to install R packages hosted on Github.
+
+Let's build our image! From inside the project directory, run the command `docker build -t stringstats .` and watch Docker do its magic. 
+
+```
+$ docker build -t stringstats .
+Sending build context to Docker daemon  243.7kB
+Step 1/6 : FROM opencpu/base
+ ---> 9f6c992d11d8
+Step 2/6 : WORKDIR /usr/local/src
+ ---> Using cache
+ ---> 90ca706a641d
+Step 3/6 : COPY . /usr/local/src/app
+ ---> 6ab2e5381552
+Removing intermediate container 454e6a09e6c3
+Step 4/6 : COPY docker/opencpu_config/* /etc/opencpu/
+ ---> 9ebff403e548
+Removing intermediate container 1373debe2889
+Step 5/6 : RUN /usr/bin/R --vanilla -f app/docker/installer.R
+ ---> Running in 971798f47f33
+
+...(lots of output as R installs stringr and its dependencies)...
+
+ ---> 58c99ee9cc7b
+Removing intermediate container 971798f47f33
+Step 6/6 : RUN tar czf /tmp/stringstats.tar.gz app/   && /usr/bin/R CMD INSTALL /tmp/stringstats.tar.gz
+ ---> Running in fde9754b5566
+* installing to library '/usr/local/lib/R/site-library'
+* installing *source* package 'stringstats' ...
+** R
+** preparing package for lazy loading
+** help
+No man pages found in package  'stringstats' 
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded
+* DONE (stringstats)
+ ---> b8228a7adfc2
+Removing intermediate container fde9754b5566
+Successfully built b8228a7adfc2
+Successfully tagged stringstats:latest
+```
+
+Now that we've built an image, let's launch a container: `docker run -d -p 8004:8004 stringstats`. OpenCPU provides a UI on port 8004, so we make sure to tell Docker to map that port to port 8004 on localhost. This will let us access the running container in our web browser for testing.
+
+```
+$ docker run -d -p 8004:8004 stringstats
+448ee587c78a224749ab5d594c0a095eb13001e5e1b9441190a566fd136f615a
+```
+
+That long ID is your unique container ID, but I find it much easier to lean on `docker ps` to see my running containers, get their unique IDs and names, etc.
+
+```
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                     NAMES
+448ee587c78a        stringstats         "/bin/sh -c 'apach..."   3 minutes ago       Up 3 minutes        80/tcp, 443/tcp, 0.0.0.0:8004->8004/tcp   pensive_colden
+```
+
+Here's the moment of truth... let's open a web browser and test our running API. Browse to `http://localhost:8004/ocpu/test/` and you should see OpenCPU's test page:
+
+IMAGE PLACEHOLDER
+
+First, let's make sure that OpenCPU has our `stringstats` package installed. In the "HTTP Request Options" form, try this endpoint (leave the Method set to GET): `../library/stringstats/R/getMeanWordLength`
+
+IMAGE PLACEHOLDER
+
+When we test the request, it should succeed with code `HTTP 200 OK`:
+
+IMAGE PLACEHOLDER
+
+In production, consumers of our API obviously won't use the OpenCPU testing interface. If you want to directly hit the API itself, try browsing to `http://localhost:8004/ocpu/library/stringstats/R/getMeanWordLength/print`
+
+IMAGE PLACEHOLDER
+
+We've been using `GET` requests, so instead of executing our code, OpenCPU is just showing us the underlying code for our endpoint. When we want to actually execute the code, we will use `POST` requests instead. Go back to the OpenCPU test interface and try a `POST` request.
+
+* Set the Method to `POST`
+* Use the "Add Parameter" button to add a `POST` argument
+* Remember, the argument accepted by our R function was named `text`, so we set the "Param Name" to `text` also
+* For the "Param Value", make sure to surround your text in quotes so it gets passed to the API correctly
+
+IMAGE PLACEHOLDER
+
+What the deuce is that?! A bunch of weirdo file paths or URLs? That's not what we expected.
+
+```
+/ocpu/tmp/x074d9e56cf/R/getMeanWordLength
+/ocpu/tmp/x074d9e56cf/R/.val
+/ocpu/tmp/x074d9e56cf/stdout
+/ocpu/tmp/x074d9e56cf/source
+/ocpu/tmp/x074d9e56cf/console
+/ocpu/tmp/x074d9e56cf/info
+/ocpu/tmp/x074d9e56cf/files/DESCRIPTION
+```
+
+I won't go into detail on all of these, but the basic idea is that OpenCPU captures a number of different streams of information for every request. The `.val` URL is the one we would use to see the results of our API call, so I'll browse to `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val` to view the output:
+
+```
+[1] 4.428571
+```
+
+Awesome, it works! But wait, it redirected me! I wound up at `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val/print`. In production, I'd want JSON output instead. Edit the URL and try ``http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val/json`. You should see the same data presented as JSON.
+
+This is all great for testing, but what about production? We don't want to hit the service twice for every request. Ideally, we would just send a single `POST` request to the endpoint we want, and get a JSON payload back without ever seeing those temporary IDs. In that case, we would send our `POST` request directly to: `http://localhost:8004/ocpu/library/stringstats/R/getMeanWordLength/json`
+
+```
+$ curl -k -H "Content-Type: application/json" -X POST -d '{"text": "This is a direct API request"}' http://localhost:8004/ocpu/library/stringstats/R/getMeanWordLength/json 
+[3.8333]
+```
+
+When working with OpenCPU, I highly recommend keeping a link to the (OpenCPU API docs)[https://www.opencpu.org/api.html] handy!
+
+
+
+# Travis CI
+
+The last thing we need to do is setup our [Travis CI](https://travis-ci.org/) integration. Once you've logged in to Travis, click on your avatar icon in the upper right to visit your account settings page. On that page, you'll see a list of your public Github repos.
+
+IMAGE PLACEHOLDER
+
+Just click the button-slider icon next to your repo's name and you should see a green check mark indicating that Travis has been enabled for your repo.
+
+IMAGE PLACEHOLDER
+
+
+
+
+
+
+
+Basic idea of continuous integration, automated testing
+
+Basic Travis-side setup
+
+.travis.yml file in repo
+
+Make a change, push to Github, trigger an automated build, green means go
 
