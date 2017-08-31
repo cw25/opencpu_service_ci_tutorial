@@ -1,0 +1,13 @@
+Package: stringstats
+Title: String Statistics API
+Version: 1.0
+Date: 2017-08-30
+Authors@R: person("Christopher", "Walker", email = "cw25@me.com", role = c("aut", "cre"))
+Author: Christopher Walker [aut, cre]
+Maintainer: Christopher Walker <cw25@me.com>
+Description: API for calculating simple statistics about text strings.
+Depends: stringr
+Suggests: testthat
+License: MIT
+Encoding: UTF-8
+LazyData: true
