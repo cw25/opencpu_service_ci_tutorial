@@ -324,7 +324,7 @@ I won't go into detail on all of these, but the basic idea is that OpenCPU captu
 [1] 4.428571
 ```
 
-Awesome, it works! But wait, it redirected me! I wound up at `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val/print`. In production, I'd want JSON output instead. Edit the URL and try ``http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val/json`. You should see the same data presented as JSON.
+It works! But wait, it redirected me! I wound up at `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val/print`. To use this as a service, I'd want JSON output instead. Edit the URL and try `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val/json`. You should see the same data presented as JSON.
 
 This is all great for testing, but what about production? We don't want to hit the service twice for every request. Ideally, we would just send a single `POST` request to the endpoint we want, and get a JSON payload back without ever seeing those temporary IDs. In that case, we would send our `POST` request directly to: `http://localhost:8004/ocpu/library/stringstats/R/getMeanWordLength/json`
 
@@ -339,7 +339,7 @@ When working with OpenCPU, I highly recommend keeping a link to the (OpenCPU API
 
 # Travis CI
 
-The last thing we need to do is setup our [Travis CI](https://travis-ci.org/) integration. Once you've logged in to Travis, click on your avatar icon in the upper right to visit your account settings page. On that page, you'll see a list of your public Github repos.
+The last thing we need to do is setup our [Travis CI](https://travis-ci.org/) integration. Once you've logged in to Travis, click on your avatar icon in the upper right to visit your account settings page. On that page, you'll see a list of your public Github repos, with handy instructions.
 
 ![Travis CI Begin](./screenshots/travis_begin.png?raw=true)
 
@@ -362,6 +362,6 @@ Now that both sides are configured properly, the next time you commit and push c
 
 After it completes, it will turn red upon failure or green upon success.
 
-![Travis CI Build Complete](./screenshots/travis_yellow.png?raw=true)
+![Travis CI Build Complete](./screenshots/travis_green.png?raw=true)
 
 Success!
