@@ -87,7 +87,7 @@ We have a bare bones R package now. This sets a solid foundation, particularly w
 
 # testthat
 
-Testing is easy in R, thanks to `testthat`. First, we create the master file that will trigger all of our tests.
+Testing is easy in R, thanks to `testthat`. First, we create the master file (`tests/testthat.R`) that will trigger all of our tests.
 
 
 ```
