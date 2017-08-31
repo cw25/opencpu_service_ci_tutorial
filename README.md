@@ -303,10 +303,11 @@ We've been using `GET` requests, so instead of executing our code, OpenCPU is ju
 * Use the "Add Parameter" button to add a `POST` argument
 * Remember, the argument accepted by our R function was named `text`, so we set the "Param Name" to `text` also
 * For the "Param Value", make sure to surround your text in quotes so it gets passed to the API correctly
+* Click "Ajax Request"
 
 ![OpenCPU POST Test](./screenshots/opencpu_post_test.png?raw=true)
 
-What the deuce is that?! A bunch of weirdo file paths or URLs? That's not what we expected. Here are the URLs that popped up for me (they use temporary IDs, so yours will look just a bit different):
+What the deuce is that output?! A bunch of weirdo file paths or URLs? That's not what we expected. Here are the URLs that popped up for me (they use temporary IDs, so yours will look just a bit different):
 
 ```
 /ocpu/tmp/x074d9e56cf/R/getMeanWordLength
