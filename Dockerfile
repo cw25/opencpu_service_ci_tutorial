@@ -1,4 +1,4 @@
-# Use the official OpenCPU Docker instructions
+# Use the official OpenCPU Dockerfile as a base
 FROM opencpu/base
 
 # Put a copy of our R code into the container

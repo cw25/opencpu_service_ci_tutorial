@@ -29,16 +29,16 @@ This Git repo can serve as a template for the layout of your project. This is th
 
 * `R/`: Your R code goes in this directory
 * `docker/installer.R`: Used to install any R dependencies your code might have. This will take the place of `library()` calls in your R code
-* `docker/opencpu_config/Renviron`: If your code relies on environment variables (via `Sys.getenv()`), you will need to set those variables here so that OpenCPU has access to them when it runs inside the Docker container
-* `docker/opencpu_config/server.conf`: Tells the OpenCPU server about your R dependencies so the libraries can be preloaded at server start time
-* `tests/testthat.R`: The master test file that is responsible for executing individual tests
-* `tests/testthat/`: Your individual R test files go in this directory
+* `docker/opencpu_config/Renviron`: _(optional)_ If your code relies on environment variables (via `Sys.getenv()`), you will need to set those variables here so that OpenCPU has access to them when it runs inside the Docker container
+* `docker/opencpu_config/server.conf`: _(optional)_ Tells the OpenCPU to preload your R dependencies for better performance
+* `tests/testthat.R`: The master test file that initiates tests for your package
+* `tests/testthat/`: Your individual tests go in this directory
 * `.gitignore`: Prevents your local junk (things like the .DS_Store files on your Mac) from being stored/tracked by Git
-* `.travis.yml`: Required Travis integration settings
+* `.travis.yml`: Travis integration settings
 * `DESCRIPTION`: Metadata about the R package you are developing
 * `Dockerfile`: Instructions for Docker on how to containerize your application
 * `LICENSE`: Legal things that people rarely read
-* `NAMESPACE`: R package instructions for importing libraries and exporting your own functions
+* `NAMESPACE`: R package instructions for importing other libraries and exporting your own functions
 * `README.md`: Bad jokes and explanatory gymnastics
 
 
@@ -49,8 +49,8 @@ For this tutorial, we will build a very simple service that takes in a text stri
 
 ```
 getMeanWordLength <- function(text) {
-    words = str_split(text, " ")
-    word_lengths = lapply(words, str_length)[[1]]
+    words <- str_split(text, " ")
+    word_lengths <- lapply(words, str_length)[[1]]
     return(mean(word_lengths))
 }
 ```
@@ -81,7 +81,7 @@ We also need to update `NAMESPACE` to tell our package how to access the functio
 import(stringr)
 ```
 
-We have a bare bones R package now. This sets a solid foundation, particularly where testing is concerned. Now let's look at how we can write and run tests to ensure that our package does what we expect it to do.
+We have a bare bones R package now. Now let's look at how we can write and run tests to ensure that our package does what we expect it to do.
 
 
 
@@ -97,7 +97,7 @@ library(stringstats)
 test_check("stringstats")
 ```
 
-Then, in the `tests/testthat/` directory, we can have as many tests as we need, split into as many files as we need. We just need to name them so they start with `test_` and end with `.R`. Let's create `tests/testthat/test_getMeanWordLength.R` to test the function we made.
+Then, in the `tests/testthat/` directory, we can have as many tests as we need, split into as many files as we need. We just need to name them so they start with `test_` and end with `.R`. Let's create `tests/testthat/test_getMeanWordLength.R` to test the function we wrote.
 
 ```
 context("getMeanWordLength")
@@ -108,7 +108,9 @@ test_that("Mean word length is computed correctly", {
 })
 ```
 
-The actual mean in this case is 3.375, but this gives us an opportunity to look at a few helpful tips that will make development go more smoothly. From the project's root directory, we can test our project with the `R CMD CHECK .` command. This will trigger a build of our package (like Docker would do in production) and run our tests. Let's see what happens:
+The actual mean word length of our test string is 3.375, but this gives us an opportunity to see a test fail, and to look at a few helpful tips that will make development go more smoothly. From the project's root directory, we can test our project with the `R CMD CHECK .` command. This will trigger a build of our package (like Docker would do in production) and run our tests.
+
+Here is the output from the testing portion of our build:
 
 
 ```
@@ -138,7 +140,7 @@ Last 13 lines of output:
 Status: 1 ERROR, 2 WARNINGs, 2 NOTEs
 ```
 
-R produces _a lot_ of output when you do a build or check. Sometimes your test output scrolls away in the stdout flood, or helpful test output gets truncated. If you want to view the full results of your tests, R captures all test output in `..Rcheck/tests/testthat.Rout.fail` when your tests fail, and `..Rcheck/tests/testthat.Rout` when they succeed. If your build breaks, and R is complaining, the `..Rcheck` directory is a good place to dig for answers.
+R produces _a lot_ of output when you build a package. Sometimes your test output scrolls away in the stdout flood, or helpful test output gets truncated. If you want to view the full results of your tests, R captures all test output in `..Rcheck/tests/testthat.Rout.fail` when your tests fail, and `..Rcheck/tests/testthat.Rout` when they succeed. If your build breaks, and R is complaining, the `..Rcheck` directory is a good place to start looking for answers.
 
 Once our test is fixed, the end of the check looks like this instead:
 
@@ -172,26 +174,30 @@ OpenCPU can accept runtime configuration options from a `server.conf` file. We w
 
 I've also run into cases where I want OpenCPU to have access to environment variables. `docker/opencpu_config/Renviron` stores those variables.
 
-(_Note:_ Our .gitignore file is set up to exclude this file, so if you are using it to store something sensitive like database access credentials, they won't wind up publicly accessible in Github.)
+(_Note:_ Our `.gitignore` file is set up to exclude this file, so if you are using it to store something sensitive like database access credentials, they won't wind up publicly accessible in Github.)
 
-In this tutorial, we won't actually use `Renviron`, but it looks something like this:
+In this tutorial, we won't actually use `Renviron`, but if we did, it would look something like this:
 
 ```
 MYSERVICE_VAR1=foo
 MYSERVICE_VAR2=bar
 ```
 
+Our R code would then be able to access those environment variables using calls to `Sys.getenv()`.
+
 
 
 # Docker
 
-I don't know about you, but I'm not too fond of setting up new server hardware. Rather than dedicate an entire production server to running OpenCPU, and doing all the hard work of installing and configuring it, we can just use Docker instead. If you've never used Docker, you can think of a Docker container as a stripped down virtual machine, containing only the bare minimum components necessary to run your service. Containerizing your service gives you some amazing advantages like tracking server configurations via version control, faster spin-up of services, efficient auto-scaling of your services, etc.
+I don't know about you, but I'm not too fond of setting up new server hardware. Rather than dedicate an entire production server to running OpenCPU, and doing all the hard work of installing and configuring it, OpenCPU provides an official `Dockerfile` to do it for us.
 
-We will need to setup two Docker-related files in order to build a Docker _image_ of our service. Once the image is built, we will spin up a container with our image and see OpenCPU in action. Let's start with the Dockerfile:
+If you're not familiar with Docker, you can think of a Docker container as a stripped down virtual machine, containing only the bare minimum components necessary to run your service. Containerizing your service gives you some amazing advantages like tracking your server configuration changes via version control, fast spin-up of services, efficient auto-scaling of your services, etc.
+
+We will need to setup two Docker-related files in order to build a Docker _image_ of our service. Once the image is built, we will spin up a container with our image and see OpenCPU in action. Let's start with our `Dockerfile`:
 
 
 ```
-# Use the official OpenCPU Docker instructions
+# Use the official OpenCPU Dockerfile as a base
 FROM opencpu/base
 
 # Put a copy of our R code into the container
@@ -209,9 +215,9 @@ RUN tar czf /tmp/stringstats.tar.gz app/ \
   && /usr/bin/R CMD INSTALL /tmp/stringstats.tar.gz
 ```
 
-Again, OpenCPU has done lots of the heavy lifting for us. The `opencpu/base` image takes care of the low-level setup and we only have to worry about our service. (If you're relly curious to see how the OpenCPU server's Dockerfile, you can take a look [here](https://hub.docker.com/r/opencpu/base/~/dockerfile/).)
+Again, OpenCPU has done lots of the heavy lifting for us. The `opencpu/base` image takes care of the low-level setup and we only have to worry about our service. (If you're really curious to see the OpenCPU server's `Dockerfile`, you can take a look [here](https://hub.docker.com/r/opencpu/base/~/dockerfile/).)
 
-In our Dockerfile, you may have noticed that there is a command that runs a custom install script, `docker/installer.R`. We will use that script to install our dependencies. For this tutorial, we only need to install `stringr` from CRAN:
+In our `Dockerfile`, you may have noticed that there is a command that runs a custom install script, `docker/installer.R`. We will use that script to install our R package dependencies. For this tutorial, we only need to install `stringr` from CRAN:
 
 ```
 install.packages(c('stringr'), repos='http://cran.us.r-project.org', dependencies=TRUE)
@@ -219,7 +225,7 @@ install.packages(c('stringr'), repos='http://cran.us.r-project.org', dependencie
 
 If we wanted to install multiple CRAN packages, we would simply add them to our `install.packages()` call. We might also use `devtools::install_github()` to install R packages hosted on Github.
 
-Let's build our image! From inside the project directory, run the command `docker build -t stringstats .` and watch Docker do its magic. 
+Let's build our Docker image! From inside the project directory, run the command `docker build -t stringstats .` and watch Docker do its magic. 
 
 ```
 $ docker build -t stringstats .
@@ -277,19 +283,19 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 
 Here's the moment of truth... let's open a web browser and test our running API. Browse to `http://localhost:8004/ocpu/test/` and you should see OpenCPU's test page:
 
-![OpenCPU Test Page](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_test_page.png?raw=true)
+![OpenCPU Test Page](./screenshots/opencpu_test_page.png?raw=true)
 
 First, let's make sure that OpenCPU has our `stringstats` package installed. In the "HTTP Request Options" form, try this endpoint (leave the Method set to GET): `../library/stringstats/R/getMeanWordLength`
 
-![OpenCPU GET Request Test](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_test_get.png?raw=true)
+![OpenCPU GET Request Test](./screenshots/opencpu_test_get.png?raw=true)
 
 When we test the request, it should succeed with code `HTTP 200 OK`:
 
-![OpenCPU Successful GET Test](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_http_200_ok.png?raw=true)
+![OpenCPU Successful GET Test](./screenshots/opencpu_http_200_ok.png?raw=true)
 
 In production, consumers of our API obviously won't use the OpenCPU testing interface. If you want to directly hit the API itself, try browsing to `http://localhost:8004/ocpu/library/stringstats/R/getMeanWordLength/print`
 
-![OpenCPU Direct GET Output](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_get_print.png?raw=true)
+![OpenCPU Direct GET Output](./screenshots/opencpu_get_print.png?raw=true)
 
 We've been using `GET` requests, so instead of executing our code, OpenCPU is just showing us the underlying code for our endpoint. When we want to actually execute the code, we will use `POST` requests instead. Go back to the OpenCPU test interface and try a `POST` request.
 
@@ -298,7 +304,7 @@ We've been using `GET` requests, so instead of executing our code, OpenCPU is ju
 * Remember, the argument accepted by our R function was named `text`, so we set the "Param Name" to `text` also
 * For the "Param Value", make sure to surround your text in quotes so it gets passed to the API correctly
 
-![OpenCPU POST Test](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_post_test.png?raw=true)
+![OpenCPU POST Test](./screenshots/opencpu_post_test.png?raw=true)
 
 What the deuce is that?! A bunch of weirdo file paths or URLs? That's not what we expected. Here are the URLs that popped up for me (they use temporary IDs, so yours will look just a bit different):
 
@@ -335,11 +341,11 @@ When working with OpenCPU, I highly recommend keeping a link to the (OpenCPU API
 
 The last thing we need to do is setup our [Travis CI](https://travis-ci.org/) integration. Once you've logged in to Travis, click on your avatar icon in the upper right to visit your account settings page. On that page, you'll see a list of your public Github repos.
 
-![Travis CI Begin](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_begin.png?raw=true)
+![Travis CI Begin](./screenshots/travis_begin.png?raw=true)
 
 Just click the button-slider icon next to your repo's name and you should see a green check mark indicating that Travis has been enabled for your repo.
 
-![Travis CI Enable](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_enable.png?raw=true)
+![Travis CI Enable](./screenshots/travis_enable.png?raw=true)
 
 Now, click on the name of your repo to watch your builds. You won't see anything there yet because we also need to set up the `.travis.yml` file in our repo:
 
@@ -352,10 +358,10 @@ cache: packages
 
 Now that both sides are configured properly, the next time you commit and push changes to Github, Travis will automatically trigger a build. Here's what it looks like on the Travis side. The build status is colored yellow to indicate a build in progress.
 
-![Travis CI Build In Progress](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_yellow.png?raw=true)
+![Travis CI Build In Progress](./screenshots/travis_yellow.png?raw=true)
 
 After it completes, it will turn red upon failure or green upon success.
 
-![Travis CI Build Complete](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_yellow.png?raw=true)
+![Travis CI Build Complete](./screenshots/travis_yellow.png?raw=true)
 
 Success!
