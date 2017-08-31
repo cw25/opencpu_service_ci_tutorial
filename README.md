@@ -277,19 +277,19 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 
 Here's the moment of truth... let's open a web browser and test our running API. Browse to `http://localhost:8004/ocpu/test/` and you should see OpenCPU's test page:
 
-IMAGE PLACEHOLDER
+![OpenCPU Test Page](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_test_page.png?raw=true)
 
 First, let's make sure that OpenCPU has our `stringstats` package installed. In the "HTTP Request Options" form, try this endpoint (leave the Method set to GET): `../library/stringstats/R/getMeanWordLength`
 
-IMAGE PLACEHOLDER
+![OpenCPU GET Request Test](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_test_get.png?raw=true)
 
 When we test the request, it should succeed with code `HTTP 200 OK`:
 
-IMAGE PLACEHOLDER
+![OpenCPU Successful GET Test](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_http_200_ok.png?raw=true)
 
 In production, consumers of our API obviously won't use the OpenCPU testing interface. If you want to directly hit the API itself, try browsing to `http://localhost:8004/ocpu/library/stringstats/R/getMeanWordLength/print`
 
-IMAGE PLACEHOLDER
+![OpenCPU Direct GET Output](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_get_print.png?raw=true)
 
 We've been using `GET` requests, so instead of executing our code, OpenCPU is just showing us the underlying code for our endpoint. When we want to actually execute the code, we will use `POST` requests instead. Go back to the OpenCPU test interface and try a `POST` request.
 
@@ -298,9 +298,9 @@ We've been using `GET` requests, so instead of executing our code, OpenCPU is ju
 * Remember, the argument accepted by our R function was named `text`, so we set the "Param Name" to `text` also
 * For the "Param Value", make sure to surround your text in quotes so it gets passed to the API correctly
 
-IMAGE PLACEHOLDER
+![OpenCPU POST Test](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/opencpu_post_test.png?raw=true)
 
-What the deuce is that?! A bunch of weirdo file paths or URLs? That's not what we expected.
+What the deuce is that?! A bunch of weirdo file paths or URLs? That's not what we expected. Here are the URLs that popped up for me (they use temporary IDs, so yours will look just a bit different):
 
 ```
 /ocpu/tmp/x074d9e56cf/R/getMeanWordLength
@@ -312,7 +312,7 @@ What the deuce is that?! A bunch of weirdo file paths or URLs? That's not what w
 /ocpu/tmp/x074d9e56cf/files/DESCRIPTION
 ```
 
-I won't go into detail on all of these, but the basic idea is that OpenCPU captures a number of different streams of information for every request. The `.val` URL is the one we would use to see the results of our API call, so I'll browse to `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val` to view the output:
+I won't go into detail on all of these, but the basic idea is that OpenCPU captures a number of different streams of information for every request. You can see the raw stdout output, the code block that was executed, the exact function call, etc. The `.val` URL is the one we would use to see the results of our API call, so I'll browse to `http://localhost:8004/ocpu/tmp/x074d9e56cf/R/.val` to view the output:
 
 ```
 [1] 4.428571
@@ -335,23 +335,27 @@ When working with OpenCPU, I highly recommend keeping a link to the (OpenCPU API
 
 The last thing we need to do is setup our [Travis CI](https://travis-ci.org/) integration. Once you've logged in to Travis, click on your avatar icon in the upper right to visit your account settings page. On that page, you'll see a list of your public Github repos.
 
-IMAGE PLACEHOLDER
+![Travis CI Begin](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_begin.png?raw=true)
 
 Just click the button-slider icon next to your repo's name and you should see a green check mark indicating that Travis has been enabled for your repo.
 
-IMAGE PLACEHOLDER
+![Travis CI Enable](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_enable.png?raw=true)
 
+Now, click on the name of your repo to watch your builds. You won't see anything there yet because we also need to set up the `.travis.yml` file in our repo:
 
+```
+sudo: false
+warnings_are_errors: false
+language: r
+cache: packages
+```
 
+Now that both sides are configured properly, the next time you commit and push changes to Github, Travis will automatically trigger a build. Here's what it looks like on the Travis side. The build status is colored yellow to indicate a build in progress.
 
+![Travis CI Build In Progress](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_yellow.png?raw=true)
 
+After it completes, it will turn red upon failure or green upon success.
 
+![Travis CI Build Complete](https://github.com/cw25/opencpu_service_ci_tutorial/screenshots/travis_yellow.png?raw=true)
 
-Basic idea of continuous integration, automated testing
-
-Basic Travis-side setup
-
-.travis.yml file in repo
-
-Make a change, push to Github, trigger an automated build, green means go
-
+Success!
