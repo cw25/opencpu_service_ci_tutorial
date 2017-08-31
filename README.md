@@ -364,4 +364,16 @@ After it completes, it will turn red upon failure or green upon success.
 
 ![Travis CI Build Complete](./screenshots/travis_green.png?raw=true)
 
-Success!
+Success! We now have a pipeline that takes us through development, testing, and CI. Actual deployment to production is left as an exercise for the reader ;-)
+
+
+# Thanks
+
+Many thanks to:
+
+* Kyle Umstatter, our Illuminate Ed ops guru, for patiently answering a gajillion questions
+* Jeroen Ooms, for saving me so much time/effort with his hard work on OpenCPU
+* The R community for their constant willingness to help
+* You, for reading this
+
+I'd love to hear your thoughts on this tutorial! You can find me on Twitter at [@iamchriswalker](https://twitter.com/iamchriswalker) or email me at [cwalker@illuminateed.com](mailto:cwalker@illuminateed.com)
