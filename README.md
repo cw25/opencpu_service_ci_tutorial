@@ -47,7 +47,7 @@ This Git repo can serve as a template for the layout of your project. This is th
 
 For this tutorial, we will build a very simple service that takes in a text string and returns the average number of characters per word. The `stringr` package provides some very useful functions that will allow us to do this quickly and easily. Here is the code that we will build our service around:
 
-```
+```R
 getMeanWordLength <- function(text) {
     words <- str_split(text, " ")
     word_lengths <- lapply(words, str_length)[[1]]
@@ -77,7 +77,7 @@ LazyData: true
 
 We also need to update `NAMESPACE` to tell our package how to access the functions we need from the `stringr` package. Thankfully, it's a simple one-liner:
 
-```
+```R
 import(stringr)
 ```
 
@@ -90,7 +90,7 @@ We have a bare bones R package now. Now let's look at how we can write and run t
 Testing is easy in R, thanks to `testthat`. First, we create the master file (`tests/testthat.R`) that will trigger all of our tests.
 
 
-```
+```R
 library(testthat)
 library(stringstats)
 
@@ -99,7 +99,7 @@ test_check("stringstats")
 
 Then, in the `tests/testthat/` directory, we can have as many tests as we need, split into as many files as we need. We just need to name them so they start with `test_` and end with `.R`. Let's create `tests/testthat/test_getMeanWordLength.R` to test the function we wrote.
 
-```
+```R
 context("getMeanWordLength")
 
 test_that("Mean word length is computed correctly", {
@@ -166,7 +166,7 @@ Docker is going to do most of the heavy lifting for us where OpenCPU is concerne
 
 OpenCPU can accept runtime configuration options from a `server.conf` file. We will store that file at `docker/opencpu_config/server.conf` in our project and later we will tell Docker to inject it into our service container. I like to use `server.conf` to tell OpenCPU about my R dependencies in advance so it will preload those libraries at server startup. The format is simple JSON:
 
-```
+```json
 {
 	"preload": ["stringr"]
 }
@@ -196,7 +196,7 @@ If you're not familiar with Docker, you can think of a Docker container as a str
 We will need to setup two Docker-related files in order to build a Docker _image_ of our service. Once the image is built, we will spin up a container with our image and see OpenCPU in action. Let's start with our `Dockerfile`:
 
 
-```
+```Dockerfile
 # Use the official OpenCPU Dockerfile as a base
 FROM opencpu/base
 
@@ -219,7 +219,7 @@ Again, OpenCPU has done lots of the heavy lifting for us. The `opencpu/base` ima
 
 In our `Dockerfile`, you may have noticed that there is a command that runs a custom install script, `docker/installer.R`. We will use that script to install our R package dependencies. For this tutorial, we only need to install `stringr` from CRAN:
 
-```
+```R
 install.packages(c('stringr'), repos='http://cran.us.r-project.org', dependencies=TRUE)
 ```
 
@@ -350,7 +350,7 @@ Just click the button-slider icon next to your repo's name and you should see a 
 
 Now, click on the name of your repo to watch your builds. You won't see anything there yet because we also need to set up the `.travis.yml` file in our repo:
 
-```
+```yml
 sudo: false
 warnings_are_errors: false
 language: r
@@ -372,7 +372,7 @@ Success! We now have a pipeline that takes us through development, testing, and 
 
 Many thanks to:
 
-* Kyle Umstatter, our Illuminate Ed ops guru, for patiently answering a gajillion questions
+* Kyle Umstatter, our Illuminate Ed Ops guru, for patiently answering a gajillion questions
 * Jeroen Ooms, for saving me so much time/effort with his hard work on OpenCPU
 * The R community for their constant willingness to help
 * You, for reading this
