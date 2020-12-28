@@ -1,7 +1,7 @@
 # So, you want to build a REST API with R...
 
-I recently found myself stuck. I had a slick bit of R code that I was using to generate some valuable stats,
-but I had no way to get it into production. The app stack where I work is mostly LAMP, and honestly, anybody
+I once found myself stuck. I had a slick bit of R code that I was using to generate some valuable stats,
+but I had no way to get it into production. The app stack where I was working was mostly LAMP, and honestly, anybody
 who says they want to do statistical computing in PHP should seek medical attention.
 
 In order to properly develop and deploy my service with continuous integration, I needed to be able to
