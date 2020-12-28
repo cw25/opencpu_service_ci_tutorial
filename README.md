@@ -25,7 +25,7 @@ Luckily, we have all the pieces we need!
 
 # First, an anatomy lesson
 
-This Git repo can serve as a template for the layout of your project. This is the same file layout I've used for building my services at [Illuminate Education](https://www.illuminateed.com). It is organized as an R package, with a few add-ons for Docker and OpenCPU. Here's a quick rundown of what the various files and directories do:
+This Git repo can serve as a template for the layout of your project. It is organized as an R package, with a few add-ons for Docker and OpenCPU. Here's a quick rundown of what the various files and directories do:
 
 * `R/`: Your R code goes in this directory
 * `docker/installer.R`: Used to install any R dependencies your code might have. This will take the place of `library()` calls in your R code
@@ -372,9 +372,9 @@ Success! We now have a pipeline that takes us through development, testing, and 
 
 Many thanks to:
 
-* Kyle Umstatter, our Illuminate Ed Ops guru, for patiently answering a gajillion questions
+* Kyle Umstatter, my former Illuminate Education colleague and Ops guru, for patiently answering a gajillion questions
 * Jeroen Ooms, for saving me so much time/effort with his hard work on OpenCPU
 * The R community for their constant willingness to help
 * You, for reading this
 
-I'd love to hear your thoughts on this tutorial! You can find me on Twitter at [@iamchriswalker](https://twitter.com/iamchriswalker) or email me at [cwalker@illuminateed.com](mailto:cwalker@illuminateed.com)
+I'd love to hear your thoughts on this tutorial! You can find me on Twitter at [@iamchriswalker](https://twitter.com/iamchriswalker) or email me at [cw25@mac.com](mailto:cw25@mac.com)
